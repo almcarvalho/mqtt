@@ -99,7 +99,7 @@ app.post('/publicar', async (req, res) => {
       }
     });
 
-    res.json.status(200)({ status: 'Pagamento aprovado', valorFormatado });
+    res.json({ status: 'Pagamento aprovado', valorFormatado });
   } catch (error) {
     console.error('Erro ao consultar pagamento:', error.message);
     res.status(500).json({ erro: 'Erro ao consultar pagamento' });
