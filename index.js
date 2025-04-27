@@ -15,17 +15,17 @@ const topico = 'almcarvalho/teste';
 client.on('connect', () => {
   console.log('Conectado ao Broker!');
 
-  // Inscreve no tópico
-  // client.subscribe(topico, (err) => {
-  //   if (!err) {
-  //     console.log(`Inscrito no tópico: ${topico}`);
+  //Inscreve no tópico
+  client.subscribe(topico, (err) => {
+    if (!err) {
+      console.log(`Inscrito no tópico: ${topico}`);
 
-  //     // Publica uma mensagem depois de inscrever
-  //     client.publish(topico, 'Mensagem de teste enviada pelo Node.js!');
-  //   } else {
-  //     console.error('Erro ao se inscrever:', err.message);
-  //   }
-  // });
+      // Publica uma mensagem depois de inscrever
+      client.publish(topico, 'Mensagem de teste enviada pelo Node.js!');
+    } else {
+      console.error('Erro ao se inscrever:', err.message);
+    }
+  });
 
 });
 
@@ -38,7 +38,7 @@ client.on('error', (err) => {
 });
 
 // Rota POST para publicar mensagem no tópico via Postman
-app.post('/publicar', (req, res) => {
+app.post('/testar', (req, res) => {
   const { mensagem, valor } = req.body;
 
   const conteudo = mensagem || valor;
@@ -56,6 +56,54 @@ app.post('/publicar', (req, res) => {
     console.log(`Mensagem publicada via HTTP: ${conteudo}`);
     res.json({ status: 'Mensagem publicada com sucesso!', conteudo });
   });
+});
+
+app.post('/publicar', async (req, res) => {
+  const { data, type } = req.body;
+
+  if (type !== 'payment' || !data || !data.id) {
+    return res.status(400).json({ erro: 'Webhook inválido' });
+  }
+
+  const paymentId = data.id;
+  const accessToken = process.env.MERCADO_PAGO_TOKEN;
+
+  if (!accessToken) {
+    return res.status(500).json({ erro: 'Token do Mercado Pago não configurado' });
+  }
+
+  try {
+    const resposta = await axios.get(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+
+    const pagamento = resposta.data;
+
+    if (pagamento.status !== 'approved') {
+      return res.status(400).json({ erro: 'Pagamento não aprovado' });
+    }
+
+    const valor = Math.round(pagamento.transaction_amount);
+    const valorFormatado = valor.toString().padStart(4, '0');
+
+    console.log(`Pagamento aprovado! Valor formatado: ${valorFormatado}`);
+
+    // Publica o valor no MQTT
+    client.publish(topico, valorFormatado, (err) => {
+      if (err) {
+        console.error('Erro ao publicar no MQTT:', err.message);
+      } else {
+        console.log(`Valor publicado no MQTT: ${valorFormatado}`);
+      }
+    });
+
+    res.json({ status: 'Pagamento aprovado', valorFormatado });
+  } catch (error) {
+    console.error('Erro ao consultar pagamento:', error.message);
+    res.status(500).json({ erro: 'Erro ao consultar pagamento' });
+  }
 });
 
 // Iniciar o servidor HTTP
