@@ -8,8 +8,6 @@ const app = express();
 app.use(express.json());
 
 // Conectando no broker público da HiveMQ
-//const client = mqtt.connect('mqtt://broker.hivemq.com:1883');
-
 const client = mqtt.connect('mqtt://broker.emqx.io:1883');
 
 const topico = 'almcarvalho/teste';
@@ -40,25 +38,27 @@ client.on('error', (err) => {
 
 // Rota POST para publicar mensagem no tópico via Postman
 app.post('/publicar', (req, res) => {
-  const { mensagem } = req.body;
+  const { mensagem, valor } = req.body;
 
-  if (!mensagem) {
-    return res.status(400).json({ erro: 'Mensagem não fornecida' });
+  const conteudo = mensagem || valor;
+
+  if (!conteudo) {
+    return res.status(400).json({ erro: 'Mensagem ou valor não fornecido' });
   }
 
-  client.publish(topico, mensagem, (err) => {
+  client.publish(topico, String(conteudo), (err) => {
     if (err) {
       console.error('Erro ao publicar mensagem:', err.message);
       return res.status(500).json({ erro: 'Falha ao publicar mensagem' });
     }
 
-    console.log(`Mensagem publicada via HTTP: ${mensagem}`);
-    res.json({ status: 'Mensagem publicada com sucesso!', mensagem });
+    console.log(`Mensagem publicada via HTTP: ${conteudo}`);
+    res.json({ status: 'Mensagem publicada com sucesso!', conteudo });
   });
 });
 
 // Iniciar o servidor HTTP
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor HTTP rodando na porta ${PORT}`);
 });
