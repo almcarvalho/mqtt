@@ -16,16 +16,17 @@ client.on('connect', () => {
   console.log('Conectado ao Broker!');
 
   // Inscreve no tópico
-  client.subscribe(topico, (err) => {
-    if (!err) {
-      console.log(`Inscrito no tópico: ${topico}`);
+  // client.subscribe(topico, (err) => {
+  //   if (!err) {
+  //     console.log(`Inscrito no tópico: ${topico}`);
 
-      // Publica uma mensagem depois de inscrever
-      client.publish(topico, 'Mensagem de teste enviada pelo Node.js!');
-    } else {
-      console.error('Erro ao se inscrever:', err.message);
-    }
-  });
+  //     // Publica uma mensagem depois de inscrever
+  //     client.publish(topico, 'Mensagem de teste enviada pelo Node.js!');
+  //   } else {
+  //     console.error('Erro ao se inscrever:', err.message);
+  //   }
+  // });
+
 });
 
 client.on('message', (topic, message) => {
