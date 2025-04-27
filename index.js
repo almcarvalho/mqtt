@@ -59,13 +59,13 @@ app.post('/testar', (req, res) => {
 });
 
 app.post('/publicar', async (req, res) => {
-  const { data, type } = req.body;
+  const { id, topic } = req.query; // ← Pega da querystring agora!
 
-  if (type !== 'payment' || !data || !data.id) {
+  if (topic !== 'payment' || !id) {
     return res.status(400).json({ erro: 'Webhook inválido' });
   }
 
-  const paymentId = data.id;
+  const paymentId = id;
   const accessToken = process.env.MERCADO_PAGO_TOKEN;
 
   if (!accessToken) {
@@ -90,7 +90,6 @@ app.post('/publicar', async (req, res) => {
 
     console.log(`Pagamento aprovado! Valor formatado: ${valorFormatado}`);
 
-    // Publica o valor no MQTT
     client.publish(topico, valorFormatado, (err) => {
       if (err) {
         console.error('Erro ao publicar no MQTT:', err.message);
@@ -99,12 +98,13 @@ app.post('/publicar', async (req, res) => {
       }
     });
 
-    res.json({ status: 'Pagamento aprovado', valorFormatado });
+    res.json.status(200)({ status: 'Pagamento aprovado', valorFormatado });
   } catch (error) {
     console.error('Erro ao consultar pagamento:', error.message);
     res.status(500).json({ erro: 'Erro ao consultar pagamento' });
   }
 });
+
 
 // Iniciar o servidor HTTP
 const PORT = process.env.PORT || 3000;
