@@ -5,8 +5,8 @@ https://www.youtube.com/watch?v=cUQvIgh0D68
 
 Branches:
 
-master
-heroku
+master,
+heroku,
 esp32
 
 Participação: Luan (Engeasier).
